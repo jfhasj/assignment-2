@@ -1,0 +1,75 @@
+---
+title: "STA304 Assignment 2 Website - Toronto Police Service Shooting Occurrences"
+format: html
+editor: visual
+---
+
+## Making a Graph from Open Data Toronto
+
+Open Data Toronto contains numerous datasets using Toronto data and is regularly updated. For this assignment, we use the dataset on annual police shooting occurrences.
+
+### Loading Libraries
+
+```{r}
+#| message: false
+#| warning: false
+
+library(opendatatoronto)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+```
+
+### Loading and Cleaning the Data
+
+```{r}
+#| message: false
+#| warning: false
+
+# Get the package and its resources
+package <- show_package("police-annual-statistical-report-shooting-occurrences")
+resources <- list_package_resources("police-annual-statistical-report-shooting-occurrences")
+
+# Identify datastore resources
+datastore_resources <- filter(resources, tolower(format) %in% c('csv', 'geojson'))
+
+# Load the first datastore resource
+data <- filter(datastore_resources, row_number()==1) %>% get_resource()
+head(data)
+```
+
+### Summarizing the Data
+
+```{r}
+#| message: false
+#| warning: false
+
+# Group by year and sum the occurrences
+data_cleaned <- data %>%
+  group_by(OccurredYear) %>%
+  summarize(num_occurrences = sum(Count_))
+
+# Check the cleaned data
+print(data_cleaned)
+```
+
+### Graphing the Data
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 6
+
+ggplot(data_cleaned, aes(x = OccurredYear, y = num_occurrences)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Annual Shooting Occurrences in Toronto",
+       x = "Year",
+       y = "Number of Occurrences") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = seq(min(data_cleaned$OccurredYear), 
+                                  max(data_cleaned$OccurredYear), 
+                                  by = 1))
+```
